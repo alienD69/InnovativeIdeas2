@@ -70,7 +70,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     ),
   ];
 
-  final List<FeedbackHistory> _feedbackHistory = [
+  final List<FeedbackHistory> _allFeedbackHistory = [
     FeedbackHistory(
       food: 'Schnitzel mit Pommes',
       emoji: '🍖',
@@ -84,7 +84,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
       emoji: '🍝',
       rating: 3,
       comment: 'Okay, aber könnte mehr Gewürze vertragen.',
-      date: DateTime.now().subtract(const Duration(days: 2)),
+      date: DateTime.now().subtract(const Duration(days: 1)),
       audioLength: 8,
     ),
     FeedbackHistory(
@@ -92,8 +92,48 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
       emoji: '🥗',
       rating: 5,
       comment: 'Perfekt! Frische Zutaten und leckeres Dressing.',
+      date: DateTime.now().subtract(const Duration(days: 2)),
+      audioLength: 12,
+    ),
+    FeedbackHistory(
+      food: 'Gemüse-Curry',
+      emoji: '🍛',
+      rating: 4,
+      comment: 'Schön würzig und mit viel Gemüse.',
+      date: DateTime.now().subtract(const Duration(days: 2)),
+      audioLength: 10,
+    ),
+    FeedbackHistory(
+      food: 'Pizza Margherita',
+      emoji: '🍕',
+      rating: 3,
+      comment: 'Durchschnittlich, Teig war etwas trocken.',
+      date: DateTime.now().subtract(const Duration(days: 3)),
+      audioLength: 7,
+    ),
+    FeedbackHistory(
+      food: 'Fischstäbchen',
+      emoji: '🐟',
+      rating: 2,
+      comment: 'Nicht frisch, zu lange warm gehalten.',
       date: DateTime.now().subtract(const Duration(days: 3)),
       audioLength: 12,
+    ),
+    FeedbackHistory(
+      food: 'Linsensuppe',
+      emoji: '🍲',
+      rating: 4,
+      comment: 'Hausgemacht und sehr nahrhaft.',
+      date: DateTime.now().subtract(const Duration(days: 4)),
+      audioLength: 9,
+    ),
+    FeedbackHistory(
+      food: 'Apfelstrudel',
+      emoji: '🥧',
+      rating: 5,
+      comment: 'Fantastisch! Wie von Oma gemacht.',
+      date: DateTime.now().subtract(const Duration(days: 4)),
+      audioLength: 14,
     ),
   ];
 
@@ -143,13 +183,12 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     }
   }
 
-  // MENÜ SEITE (Original)
+  // MENÜ SEITE (Überarbeitet für Kategorien)
   Widget _buildMenuPage() {
     return Column(
       children: [
         _buildHeader(),
-        _buildHeroBanner(),
-        Expanded(child: _buildFoodGrid()),
+        Expanded(child: _buildCategoryGrid()),
       ],
     );
   }
@@ -168,15 +207,15 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                 _buildStatsCards(),
                 const SizedBox(height: 20),
                 const Text(
-                  'Letzte Bewertungen',
+                  'Alle Bewertungen (Mitarbeiter-Übersicht)',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 Expanded(
                   child: ListView.builder(
-                    itemCount: _feedbackHistory.length,
+                    itemCount: _allFeedbackHistory.length,
                     itemBuilder: (context, index) {
-                      return _buildHistoryCard(_feedbackHistory[index]);
+                      return _buildHistoryCard(_allFeedbackHistory[index]);
                     },
                   ),
                 ),
@@ -201,8 +240,6 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                 _buildOverallStats(),
                 const SizedBox(height: 20),
                 _buildCategoryStats(),
-                const SizedBox(height: 20),
-                _buildWeeklyChart(),
                 const SizedBox(height: 20),
                 _buildTopRatedFoods(),
               ],
@@ -269,7 +306,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     return Row(
       children: [
         Expanded(
-          child: _buildStatCard('Bewertungen', '${_feedbackHistory.length}', Icons.rate_review, Colors.blue),
+          child: _buildStatCard('Bewertungen', '${_allFeedbackHistory.length}', Icons.rate_review, Colors.blue),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -887,14 +924,21 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     );
   }
 
-  Widget _buildFoodGrid() {
+  Widget _buildCategoryGrid() {
+    final categories = [
+      {'name': 'Hauptgericht', 'emoji': '🍖', 'color': Colors.brown, 'count': 45},
+      {'name': 'Vegetarisch', 'emoji': '🥬', 'color': Colors.green, 'count': 32},
+      {'name': 'Vegan', 'emoji': '🌱', 'color': Colors.lightGreen, 'count': 28},
+      {'name': 'Salat', 'emoji': '🥗', 'color': Colors.teal, 'count': 38},
+    ];
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Heutiges Menü',
+            'Kategorien - Übersicht',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -905,13 +949,13 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 0.8,
+                childAspectRatio: 1.2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
-              itemCount: _todaysMenu.length,
+              itemCount: categories.length,
               itemBuilder: (context, index) {
-                return _buildFoodCard(_todaysMenu[index]);
+                return _buildCategoryCard(categories[index]);
               },
             ),
           ),
@@ -920,119 +964,53 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     );
   }
 
-  Widget _buildFoodCard(MensaFood food) {
-    return GestureDetector(
-      onTap: () => _showFoodDetail(food),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
+  Widget _buildCategoryCard(Map<String, dynamic> category) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: (category['color'] as Color).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(30),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 3,
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      food.emoji,
-                      style: const TextStyle(fontSize: 48),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: _getCategoryColor(food.category),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        food.category,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+            child: Center(
+              child: Text(
+                category['emoji'],
+                style: const TextStyle(fontSize: 30),
               ),
             ),
-            
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      food.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
-                    
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 16),
-                            Text(
-                              ' ${food.rating}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              ' (${food.reviewCount})',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '€${food.price.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.orange.shade600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            category['name'],
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${category['count']} Bewertungen',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
       ),
     );
   }
