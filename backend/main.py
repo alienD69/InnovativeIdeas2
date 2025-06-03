@@ -17,6 +17,9 @@ def transcribe_audio():
         return jsonify({"error": "No audio file uploaded"}), 400
 
     file = request.files["file"]
+    print("Dateiname:", file.filename)
+    print("Dateigröße (Bytes):", len(file.read()))
+    file.seek(0)  # ganz wichtig – zurück zum Anfang für save()
     file_id = str(uuid.uuid4())
     audio_path = os.path.join(AUDIO_DIR, f"{file_id}.webm")
     text_path = os.path.join(TEXT_DIR, f"{file_id}.txt")
