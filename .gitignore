@@ -196,3 +196,4 @@ cython_debug/
 # macOS & R-Studio Systemdateien
 .DS_Store
 .Rhistory
+.DS_Store
