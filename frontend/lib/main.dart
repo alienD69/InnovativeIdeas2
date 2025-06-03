@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:html' as html;
+import 'dart:js' as js;
 
 void main() {
   runApp(const MyApp());
@@ -143,17 +145,31 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     });
   }
 
+
+  @override
+void initState() {
+  super.initState();
+  html.window.addEventListener('transcriptionResult', (event) {
+    final customEvent = event as html.CustomEvent;
+    final transcript = customEvent.detail;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Audio erkannt: "$transcript"')),
+    );
+  });
+}
+  
   void _toggleRecording() {
-    setState(() {
-      _isRecording = !_isRecording;
-    });
-    
-    if (_isRecording) {
-      print("Audio-Aufnahme gestartet");
-    } else {
-      print("Audio-Aufnahme gestoppt");
-    }
+  setState(() {
+    _isRecording = !_isRecording;
+  });
+
+  if (_isRecording) {
+    js.context.callMethod('startRecording');
+  } else {
+    js.context.callMethod('stopRecording');
   }
+}
 
   @override
   Widget build(BuildContext context) {
