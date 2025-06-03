@@ -6,7 +6,7 @@ import uuid
 import tempfile
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["*"])
 model = whisper.load_model("base")
 
 # Verwende temporäre Ordner statt permanente Speicherung
