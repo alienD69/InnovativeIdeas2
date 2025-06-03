@@ -197,3 +197,13 @@ cython_debug/
 .DS_Store
 .Rhistory
 .DS_Store
+
+# Audio und Daten - lokal behalten, nicht in Git
+data/
+backend/data/
+*.webm
+*.mp3
+*.wav
+*.m4a
+*.ogg
+*.flac
