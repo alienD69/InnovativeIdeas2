@@ -14,8 +14,8 @@ function startRecording() {
             };
 
             mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                const file = new File([audioBlob], "feedback.mp3", { type: "audio/mp3" });
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const file = new File([audioBlob], "feedback.webm", { type: "audio/webm" });
                 sendAudioToBackend(file);
             };
 
