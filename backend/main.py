@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import whisper
 import os
 import uuid
 
 app = Flask(__name__)
+CORS(app)
 model = whisper.load_model("base")
 
 AUDIO_DIR = "data/audio"
