@@ -18,7 +18,7 @@ def transcribe_audio():
 
     file = request.files["file"]
     file_id = str(uuid.uuid4())
-    audio_path = os.path.join(AUDIO_DIR, f"{file_id}.mp3")
+    audio_path = os.path.join(AUDIO_DIR, f"{file_id}.webm")
     text_path = os.path.join(TEXT_DIR, f"{file_id}.txt")
 
     # Speichern
