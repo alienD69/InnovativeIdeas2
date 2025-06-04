@@ -192,3 +192,18 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# macOS & R-Studio Systemdateien
+.DS_Store
+.Rhistory
+.DS_Store
+
+# Audio und Daten - lokal behalten, nicht in Git
+data/
+backend/data/
+*.webm
+*.mp3
+*.wav
+*.m4a
+*.ogg
+*.flac

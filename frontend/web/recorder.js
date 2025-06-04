@@ -14,8 +14,8 @@ function startRecording() {
             };
 
             mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                const file = new File([audioBlob], "feedback.mp3", { type: "audio/mp3" });
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const file = new File([audioBlob], "feedback.webm", { type: "audio/webm" });
                 sendAudioToBackend(file);
             };
 
@@ -38,13 +38,18 @@ function sendAudioToBackend(file) {
     const formData = new FormData();
     formData.append("file", file);
 
-    fetch("http://localhost:5000/transcribe", {
-        method: "POST",
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        window.dispatchEvent(new CustomEvent("transcriptionResult", { detail: data.transcript }));
-    })
-    .catch(error => console.error("Fehler beim Hochladen:", error));
-}
+fetch("http://localhost:5000/transcribe", {
+  method: "POST",
+  body: formData
+})
+.then(response => {
+  if (!response.ok) throw new Error("Upload fehlgeschlagen");
+  return response.json();
+})
+.then(data => {
+  window.dispatchEvent(new CustomEvent("transcriptionResult", { detail: data.transcript }));
+})
+.catch(error => {
+  console.error("Fehler beim Hochladen:", error);
+  alert("Fehler beim Hochladen: " + error.message);
+});
