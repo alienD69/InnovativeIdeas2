@@ -45,7 +45,7 @@ def transcribe_audio():
         
         # Transkribieren
         print("🔄 Starte Transkription...")
-        result = model.transcribe(audio_path)
+        result = model.transcribe(audio_path, language='de')
         transcript = result["text"]
         print(f"📝 Transkript: {transcript}")
 
