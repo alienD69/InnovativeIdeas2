@@ -1,24 +1,48 @@
-# Mensa App
-
-Frontend: Flutter
-Backend: Python
-
-Zum Starten des Frontends Befehl "flutter run -d chrome" ausführen
-
-
-
 # 🎤 InnovativeIdeas – Mensa Feedback Web-App
 
-Dieses Projekt ist eine Flutter-Web-App zur Erfassung von Mensa-Feedback über Text- und Spracheingabe. Sprachaufnahmen werden lokal per Whisper transkribiert. Das Backend läuft mit Flask.
+Dieses Projekt ist eine Flutter-Web-App zur Erfassung von Mensa-Feedback über Text- und Spracheingabe. Sprachaufnahmen werden lokal per Whisper transkribiert. Das Backend läuft mit Flask. Alles funktioniert lokal – ohne Online-Services.
 
 ---
 
 ## ✅ Voraussetzungen
 
-### 📦 Flutter Web (Frontend)
-- [Flutter SDK](https://docs.flutter.dev/get-started/install)
-- Chrome installiert
+### 🧠 Für alle:
+- Internetverbindung für erste Installationen
+- Zwei Terminalfenster (z. B. VS Code oder Terminal + PowerShell)
+- Google Chrome installiert
 
+---
+
+## 💻 1. Installation auf **Mac**
+
+### 🔧 Homebrew (wenn noch nicht installiert):
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+### 📦 Python + ffmpeg:
+```bash
+brew install python3 ffmpeg
+```
+
+---
+
+## 🖥️ 2. Installation auf **Windows**
+
+### 📦 Installiere manuell:
+- [Python 3.x (mit Häkchen bei "Add to PATH")](https://www.python.org/downloads/)
+- [ffmpeg für Windows](https://www.gyan.dev/ffmpeg/builds/)  
+  → ZIP entpacken  
+  → Ordnerpfad zur `bin/` in die Systemumgebungsvariablen → `Path` eintragen
+
+---
+
+## 🌐 3. Flutter Web installieren (Mac & Windows)
+
+### 🔧 Flutter SDK:
+- [Flutter installieren (offizielle Anleitung)](https://docs.flutter.dev/get-started/install)
+
+### ⚙️ Nach Installation im Terminal:
 ```bash
 flutter doctor
 flutter config --enable-web
@@ -26,23 +50,18 @@ flutter config --enable-web
 
 ---
 
-### 🐍 Python + Whisper (Backend)
-- Python 3.9 oder höher
-- pip installiert
-- ffmpeg installiert
+## 📦 4. Python-Bibliotheken installieren
 
-#### 📥 Installation (macOS):
+In deinem Projektverzeichnis (z. B. `InnovativeIdeas/`) im Terminal:
+
 ```bash
-brew install ffmpeg
 python3 -m pip install --upgrade pip
 pip install flask flask-cors openai-whisper
 ```
 
-#### 📥 Installation (Linux):
+Falls du Probleme mit `pip` hast, versuch:
 ```bash
-sudo apt install ffmpeg
-python3 -m pip install --upgrade pip
-pip install flask flask-cors openai-whisper
+python -m pip install flask flask-cors openai-whisper
 ```
 
 ---
@@ -65,55 +84,63 @@ InnovativeIdeas/
 
 ---
 
-## ▶️ Lokales Starten
+## ▶️ Projekt starten
 
-### 1. Backend starten (in Terminal 1):
+### 🟡 1. Backend starten (in Terminal 1)
 ```bash
 cd backend
 python3 main.py
 ```
-
-→ läuft dann auf `http://localhost:5000`
+→ läuft unter `http://localhost:5000`
 
 ---
 
-### 2. Frontend starten (in Terminal 2):
+### 🟠 2. Frontend starten (in Terminal 2)
 ```bash
 cd frontend
 flutter run -d chrome
 ```
-
-→ öffnet die Web-App automatisch im Browser
+→ öffnet automatisch die App im Chrome-Browser
 
 ---
 
-## ⚠️ CORS-Probleme?
+## 🔧 Wichtig: CORS aktivieren im Backend
 
-Falls Audio-Upload blockiert wird, stelle sicher:
-- `flask-cors` ist installiert
-- In `main.py` ist enthalten:
-
+In deiner `main.py`:
 ```python
 from flask_cors import CORS
-...
+
+app = Flask(__name__)
 CORS(app)
 ```
 
 ---
 
-## 💡 Weitere Tipps
+## 🛠️ Fehlerbehandlung
 
-- Um Pakete zu dokumentieren:
+- **Mikrofon nicht erkannt?**
+  → Browser-Zugriff erlauben  
+- **Fehler beim Hochladen?**
+  → Stelle sicher, dass das Backend läuft und `flask-cors` installiert ist
+- **Audiodatei leer?**
+  → Verwende `audio/webm` im `recorder.js` statt `mp3`
+
+---
+
+## 📌 Optional: Alles dokumentieren
 ```bash
 pip freeze > requirements.txt
 ```
 
-- Um Dateien wie `.DS_Store` oder `.Rhistory` zu ignorieren:
+---
+
+## ✅ Ignoriere unerwünschte Dateien in `.gitignore`
 ```gitignore
 .DS_Store
 .Rhistory
+*.zip
 ```
 
 ---
 
-## 🚀 Viel Erfolg bei der Entwicklung!
+## Viel Erfolg beim Testen!
