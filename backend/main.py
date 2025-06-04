@@ -3,16 +3,14 @@ from flask_cors import CORS
 import whisper
 import os
 import uuid
-import tempfile
 
 app = Flask(__name__)
 CORS(app, origins=["*"])
 model = whisper.load_model("base")
 
 # Temporäre Ordner
-TEMP_DIR = tempfile.gettempdir()
-AUDIO_DIR = os.path.join(TEMP_DIR, "mensa_audio")
-TEXT_DIR = os.path.join(TEMP_DIR, "mensa_text")
+AUDIO_DIR = "data/audio"
+TEXT_DIR = "data/text"
 os.makedirs(AUDIO_DIR, exist_ok=True)
 os.makedirs(TEXT_DIR, exist_ok=True)
 
@@ -41,11 +39,19 @@ def transcribe_audio():
     try:
         # Speichern
         file.save(audio_path)
-        print(f"✅ Audio gespeichert: {os.path.exists(audio_path)}")
+        print(f"🔍 Datei existiert: {os.path.exists(audio_path)}")
+        print(f"🔍 Dateigröße: {os.path.getsize(audio_path) if os.path.exists(audio_path) else 'Nicht gefunden'}")
+
         
         # Transkribieren
         print("🔄 Starte Transkription...")
-        result = model.transcribe(audio_path)
+        result = model.transcribe(
+            audio_path, 
+            language='de',
+            fp16=False,            # CPU-optimiert
+            temperature=0.0,       # Weniger Halluzination
+            no_speech_threshold=0.6 # Silence-Detection
+        )
         transcript = result["text"]
         print(f"📝 Transkript: {transcript}")
 
@@ -53,7 +59,10 @@ def transcribe_audio():
         with open(text_path, "w", encoding='utf-8') as f:
             f.write(transcript)
         print(f"✅ Text gespeichert: {text_path}")
-
+        print(f"🔍 Text-Datei existiert: {os.path.exists(text_path)}")
+        if os.path.exists(text_path):
+            with open(text_path, 'r') as f:
+                print(f"🔍 Text-Inhalt: {f.read()}")
         # NICHT löschen für Debug
         # os.remove(audio_path)
         
