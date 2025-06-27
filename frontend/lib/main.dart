@@ -856,7 +856,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Meine Top bewerteten Gerichte',
+            'Top bewerteten Gerichte',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
