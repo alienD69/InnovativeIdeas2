@@ -1237,11 +1237,11 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildRatingButton('😞', 'Schlecht', 1, food),
-                  _buildRatingButton('😐', 'Okay', 2, food),
-                  _buildRatingButton('😊', 'Gut', 3, food),
-                  _buildRatingButton('🤩', 'Super', 4, food),
-                  _buildRatingButton('😍', 'Perfekt', 5, food),
+                  _buildRatingButton(1, 'Schlecht', food),
+                  _buildRatingButton(2, 'Okay', food),
+                  _buildRatingButton(3, 'Gut', food),
+                  _buildRatingButton(4, 'Super', food),
+                  _buildRatingButton(5, 'Perfekt', food),
                 ],
               ),
               const SizedBox(height: 24),
@@ -1268,29 +1268,48 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     );
   }
 
-  Widget _buildRatingButton(String emoji, String label, int rating, MensaFood food) {
-    return Column(
-      children: [
-        GestureDetector(
-          onTap: () => _addRating(food, rating, label),
-          child: Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: Colors.orange.shade200, width: 2),
-            ),
-            child: Center(
-              child: Text(emoji, style: const TextStyle(fontSize: 24)),
-            ),
+  Widget _buildRatingButton(int rating, String label, MensaFood food) {
+  return Column(
+    children: [
+      GestureDetector(
+        onTap: () => _addRating(food, rating, label),
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: Colors.orange.shade200, width: 2),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(rating, (index) => Icon(
+                  Icons.star,
+                  color: Colors.amber,
+                  size: rating <= 2 ? 12 : (rating == 3 ? 10 : 8),
+                )),
+              ),
+              if (rating > 3) const SizedBox(height: 2),
+              Text(
+                '$rating',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 12)),
-      ],
-    );
-  }
+      ),
+      const SizedBox(height: 4),
+      Text(label, style: const TextStyle(fontSize: 12)),
+    ],
+  );
+}
 
   void _addRating(MensaFood food, int rating, String ratingLabel) {
     Navigator.pop(context);
