@@ -1008,7 +1008,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.asset(
-                    'icons/Icon_UPB.svg.png',
+                    'assets/icons/Icon_UPB.svg.png',
                     width: 50,
                     height: 50,
                     fit: BoxFit.contain,
