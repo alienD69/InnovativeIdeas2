@@ -998,9 +998,22 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
         children: [
           Row(
             children: [
-              const Text(
-                '👋',
-                style: TextStyle(fontSize: 32),
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha((0.2 * 255).round()),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(
+                    'icons/Icon_UPB.svg.png',
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.contain,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
