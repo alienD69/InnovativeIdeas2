@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:html' as html;
 import 'dart:js' as js;
 
 void main() {
@@ -163,7 +162,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   };
 
   // Liste für echte Bewertungen (wird erweitert wenn User bewertet)
-  List<FeedbackHistory> _userFeedback = [];
+  final List<FeedbackHistory> _userFeedback = [];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -187,14 +186,8 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   @override
   void initState() {
     super.initState();
-    html.window.addEventListener('transcriptionResult', (event) {
-      final customEvent = event as html.CustomEvent;
-      final transcript = customEvent.detail;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Audio erkannt: "$transcript"')),
-      );
-    });
+    // Event Listener für Audio-Transkription kann hier hinzugefügt werden
+    // wenn das HTML-Element verfügbar ist
   }
   
   void _toggleRecording() {
@@ -230,8 +223,6 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
         return _buildHistoryPage();
       case 2:
         return _buildStatisticsPage();
-      case 3:
-        return _buildProfilePage();
       default:
         return _buildMenuPage();
     }
@@ -253,7 +244,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
 
   Widget _buildCategoryGrid() {
     final categories = [
-      {'name': 'Essen', 'emoji': '🍖', 'color': Colors.brown, 'count': _menuByCategory['Essen']!.length},
+      {'name': 'Hauptgerichte', 'emoji': '🍖', 'color': Colors.brown, 'count': _menuByCategory['Essen']!.length},
       {'name': 'Beilagen', 'emoji': '🥔', 'color': Colors.green, 'count': _menuByCategory['Beilagen']!.length},
       {'name': 'Desserts', 'emoji': '🍰', 'color': Colors.pink, 'count': _menuByCategory['Desserts']!.length},
     ];
@@ -264,24 +255,22 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Kategorien - Übersicht',
+            'Was möchtest du heute bewerten?',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Expanded(
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 1.2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-              ),
+            child: ListView.builder(
               itemCount: categories.length,
               itemBuilder: (context, index) {
-                return _buildCategoryCard(categories[index]);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildVerticalCategoryCard(categories[index]),
+                );
               },
             ),
           ),
@@ -290,10 +279,14 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     );
   }
 
-  Widget _buildCategoryCard(Map<String, dynamic> category) {
+  Widget _buildVerticalCategoryCard(Map<String, dynamic> category) {
+    final categoryKey = category['name'] == 'Hauptgerichte' ? 'Essen' : category['name'];
+    
     return GestureDetector(
-      onTap: () => _selectCategory(category['name']),
+      onTap: () => _selectCategory(categoryKey),
       child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -304,39 +297,79 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
               offset: const Offset(0, 2),
             ),
           ],
+          border: Border.all(
+            color: (category['color'] as Color).withAlpha((0.2 * 255).round()),
+            width: 1,
+          ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Row(
           children: [
             Container(
-              width: 60,
-              height: 60,
+              width: 70,
+              height: 70,
               decoration: BoxDecoration(
-                color: (category['color'] as Color).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(30),
+                color: (category['color'] as Color).withAlpha((0.1 * 255).round()),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: (category['color'] as Color).withAlpha((0.3 * 255).round()),
+                  width: 2,
+                ),
               ),
               child: Center(
                 child: Text(
                   category['emoji'],
-                  style: const TextStyle(fontSize: 30),
+                  style: const TextStyle(fontSize: 32),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            Text(
-              category['name'],
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    category['name'],
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: (category['color'] as Color),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${category['count']} Gerichte verfügbar',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: (category['color'] as Color).withAlpha((0.1 * 255).round()),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: (category['color'] as Color).withAlpha((0.3 * 255).round()),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      'Jetzt bewerten',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: (category['color'] as Color),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              '${category['count']} Gerichte',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: (category['color'] as Color),
+              size: 20,
             ),
           ],
         ),
@@ -368,17 +401,26 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          Text(
+            '${foods.length} Gerichte verfügbar',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
           const SizedBox(height: 16),
           Expanded(
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 1,
-                childAspectRatio: 3.5,
+                crossAxisCount: 2,
+                childAspectRatio: 0.85,
+                crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
               ),
               itemCount: foods.length,
               itemBuilder: (context, index) {
-                return _buildFoodCard(foods[index]);
+                return _buildFoodTile(foods[index]);
               },
             ),
           ),
@@ -387,62 +429,107 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     );
   }
 
-  Widget _buildFoodCard(MensaFood food) {
+  Widget _buildFoodTile(MensaFood food) {
     return GestureDetector(
       onTap: () => _showFoodDetail(food),
       child: Container(
-        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withAlpha((0.1 * 255).round()),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Row(
-          children: [
-            Text(food.emoji, style: const TextStyle(fontSize: 40)),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    food.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Emoji als großes Icon
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: _getCategoryColorForFood(food.category).withAlpha((0.1 * 255).round()),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Center(
+                  child: Text(
+                    food.emoji,
+                    style: const TextStyle(fontSize: 32),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    food.description,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                ),
               ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.grey,
-              size: 16,
-            ),
-          ],
+              const SizedBox(height: 12),
+              // Gericht Name
+              Text(
+                food.name,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+              // Beschreibung
+              Text(
+                food.description,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 12),
+              // Bewerten Button
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: _getCategoryColorForFood(food.category).withAlpha((0.1 * 255).round()),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: _getCategoryColorForFood(food.category).withAlpha((0.3 * 255).round()),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  'Bewerten',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _getCategoryColorForFood(food.category),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  // Hilfsfunktion um die richtige Farbe für jede Kategorie zu bekommen
+  Color _getCategoryColorForFood(String category) {
+    switch (category) {
+      case 'Essen':
+        return Colors.brown;
+      case 'Beilagen':
+        return Colors.green;
+      case 'Desserts':
+        return Colors.pink;
+      default:
+        return Colors.grey;
+    }
   }
 
   // VERLAUF SEITE - zeigt echte Bewertungen
@@ -523,29 +610,6 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                 _buildCategoryStats(),
                 const SizedBox(height: 20),
                 _buildTopRatedFoods(),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // PROFIL SEITE
-  Widget _buildProfilePage() {
-    return Column(
-      children: [
-        _buildPageHeader('Mein Profil', Icons.person),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                _buildProfileCard(),
-                const SizedBox(height: 20),
-                _buildAchievements(),
-                const SizedBox(height: 20),
-                _buildSettings(),
               ],
             ),
           ),
@@ -797,8 +861,13 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
 
   double _getCategoryPercentage(String category) {
     if (_userFeedback.isEmpty) return 0.0;
+    
+    // Mapping für die Anzeigenamen
+    String categoryKey = category;
+    if (category == 'Hauptgerichte') categoryKey = 'Essen';
+    
     int categoryCount = _userFeedback.where((feedback) => 
-      _menuByCategory[category]!.any((food) => food.name == feedback.food)
+      _menuByCategory[categoryKey]!.any((food) => food.name == feedback.food)
     ).length;
     return categoryCount / _userFeedback.length;
   }
@@ -810,7 +879,10 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
         children: [
           SizedBox(
             width: 80,
-            child: Text(category, style: const TextStyle(fontSize: 12)),
+            child: Text(
+              category == 'Essen' ? 'Hauptgerichte' : category, 
+              style: const TextStyle(fontSize: 12)
+            ),
           ),
           Expanded(
             child: Container(
@@ -901,206 +973,124 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     );
   }
 
-  Widget _buildProfileCard() {
+  Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.orange.shade400,
+            Colors.orange.shade600,
+          ],
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: Colors.orange.shade100,
-            child: Text(
-              'HH',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.orange.shade600,
-              ),
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Henry Huynh',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const Text(
-                  'Student | Informatik',
-                  style: TextStyle(color: Colors.grey, fontSize: 14),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Mitglied seit ${DateTime.now().year}',
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.edit),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAchievements() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.orange.withAlpha((0.3 * 255).round()),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Errungenschaften',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildAchievement('🏆', 'Erste Bewertung'),
-              _buildAchievement('🔥', '7 Tage Streak'),
-              _buildAchievement('⭐', '100 Bewertungen'),
-              _buildAchievement('🎤', 'Audio-Experte'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAchievement(String emoji, String title) {
-    return Column(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: Colors.orange.shade50,
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: Center(
-            child: Text(emoji, style: const TextStyle(fontSize: 24)),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          title,
-          style: const TextStyle(fontSize: 10),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSettings() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _buildSettingItem(Icons.notifications, 'Benachrichtigungen', true),
-          _buildSettingItem(Icons.dark_mode, 'Dark Mode', false),
-          _buildSettingItem(Icons.language, 'Sprache', false),
-          _buildSettingItem(Icons.help, 'Hilfe & Support', false),
-          _buildSettingItem(Icons.logout, 'Abmelden', false),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingItem(IconData icon, String title, bool hasSwitch) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.orange.shade600),
-      title: Text(title),
-      trailing: hasSwitch 
-        ? Switch(
-            value: true,
-            onChanged: (value) {},
-            activeColor: Colors.orange,
-          )
-        : const Icon(Icons.arrow_forward_ios, size: 16),
-      onTap: () {},
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              height: 45,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(25),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+              const Text(
+                '👋',
+                style: TextStyle(fontSize: 32),
               ),
-              child: const TextField(
-                decoration: InputDecoration(
-                  hintText: 'Gericht suchen...',
-                  prefixIcon: Icon(Icons.search, color: Colors.grey),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Universität Paderborn',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Teile deine Meinung über das Mensa-Essen!',
+                      style: TextStyle(
+                        color: Colors.white.withAlpha((0.9 * 255).round()),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(width: 12),
+          const SizedBox(height: 16),
           Container(
-            width: 45,
-            height: 45,
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.orange.shade600,
-              borderRadius: BorderRadius.circular(22.5),
+              color: Colors.white.withAlpha((0.2 * 255).round()),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withAlpha((0.3 * 255).round()),
+                width: 1,
+              ),
             ),
-            child: const Icon(
-              Icons.person,
-              color: Colors.white,
-              size: 24,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha((0.2 * 255).round()),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.mic,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Audio-Bewertungen',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        'Einfach sprechen statt tippen! 🎤',
+                        style: TextStyle(
+                          color: Colors.white.withAlpha((0.8 * 255).round()),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'NEU',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1121,7 +1111,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
         ),
         boxShadow: [
           BoxShadow(
-            color: (_isRecording ? Colors.red : Colors.orange).withOpacity(0.4),
+            color: (_isRecording ? Colors.red : Colors.orange).withAlpha((0.4 * 255).round()),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -1148,7 +1138,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withAlpha((0.1 * 255).round()),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -1174,10 +1164,6 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.analytics),
             label: 'Statistiken',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profil',
           ),
         ],
       ),
@@ -1269,47 +1255,47 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   }
 
   Widget _buildRatingButton(int rating, String label, MensaFood food) {
-  return Column(
-    children: [
-      GestureDetector(
-        onTap: () => _addRating(food, rating, label),
-        child: Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: Colors.orange.shade200, width: 2),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(rating, (index) => Icon(
-                  Icons.star,
-                  color: Colors.amber,
-                  size: rating <= 2 ? 12 : (rating == 3 ? 10 : 8),
-                )),
-              ),
-              if (rating > 3) const SizedBox(height: 2),
-              Text(
-                '$rating',
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: () => _addRating(food, rating, label),
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: Colors.orange.shade200, width: 2),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(rating, (index) => Icon(
+                    Icons.star,
+                    color: Colors.amber,
+                    size: rating <= 2 ? 12 : (rating == 3 ? 10 : 8),
+                  )),
                 ),
-              ),
-            ],
+                if (rating > 3) const SizedBox(height: 2),
+                Text(
+                  '$rating',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-      const SizedBox(height: 4),
-      Text(label, style: const TextStyle(fontSize: 12)),
-    ],
-  );
-}
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 12)),
+      ],
+    );
+  }
 
   void _addRating(MensaFood food, int rating, String ratingLabel) {
     Navigator.pop(context);
