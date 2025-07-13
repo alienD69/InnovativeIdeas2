@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'dart:convert';
 import 'dart:js' as js;
 
 void main() {
@@ -36,130 +38,15 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   int _selectedIndex = 0;
   bool _isRecording = false;
   String? _selectedCategory;
+  bool _hasRecordedAudio = false;
+  int? _selectedRating;
+  
+  // Wird aus JSON geladen
+  Map<String, List<MensaFood>> _menuByCategory = {};
+  bool _isLoading = true;
 
-  // Kategorien mit Gerichten (ohne vorgegebene Bewertungen)
-  final Map<String, List<MensaFood>> _menuByCategory = {
-    'Essen': [
-      MensaFood(
-        name: 'Asiatischer Wok mit Hähnchenstreifen',
-        category: 'Essen',
-        emoji: '🍜',
-        description: 'Mit Kokoscurrysauce',
-      ),
-      MensaFood(
-        name: 'Bratwurst mit Currysauce',
-        category: 'Essen',
-        emoji: '🌭',
-        description: 'Mit Pommes frites',
-      ),
-      MensaFood(
-        name: 'Vegane Bratwurst',
-        category: 'Essen',
-        emoji: '🌱',
-        description: 'Mit Currysauce und Pommes',
-      ),
-      MensaFood(
-        name: 'Spießbraten',
-        category: 'Essen',
-        emoji: '🥩',
-        description: 'Mit Paprikarahmsauce',
-      ),
-      MensaFood(
-        name: 'Grünkohl-Hanfratling',
-        category: 'Essen',
-        emoji: '🥬',
-        description: 'Mit Kartoffelwürfeln',
-      ),
-      MensaFood(
-        name: 'Burrito mit Chili sin Carne',
-        category: 'Essen',
-        emoji: '🌯',
-        description: 'Mit Guacamole',
-      ),
-      MensaFood(
-        name: 'Chicken-Cheese Burger',
-        category: 'Essen',
-        emoji: '🍔',
-        description: 'Mit Cheddar und Honig-Senfcreme',
-      ),
-      MensaFood(
-        name: 'Cevapcici vom Rind',
-        category: 'Essen',
-        emoji: '🍖',
-        description: 'Mit Barbecuesauce',
-      ),
-    ],
-    'Beilagen': [
-      MensaFood(
-        name: 'Beilagensalat Vinaigrette',
-        category: 'Beilagen',
-        emoji: '🥗',
-        description: 'Herzhaft',
-      ),
-      MensaFood(
-        name: 'Apfelrotkohl',
-        category: 'Beilagen',
-        emoji: '🟣',
-        description: 'Traditionell zubereitet',
-      ),
-      MensaFood(
-        name: 'Risoléekartoffeln',
-        category: 'Beilagen',
-        emoji: '🥔',
-        description: 'Goldbraun gebraten',
-      ),
-      MensaFood(
-        name: 'Weißkrautsalat',
-        category: 'Beilagen',
-        emoji: '🥬',
-        description: 'Frisch und knackig',
-      ),
-      MensaFood(
-        name: 'Petersilienkartoffeln',
-        category: 'Beilagen',
-        emoji: '🌿',
-        description: 'Mit frischer Petersilie',
-      ),
-    ],
-    'Desserts': [
-      MensaFood(
-        name: 'Vanillemousse mit Kirschen',
-        category: 'Desserts',
-        emoji: '🍒',
-        description: 'Cremig und fruchtig',
-      ),
-      MensaFood(
-        name: 'Quarkspeise Pfirsich',
-        category: 'Desserts',
-        emoji: '🍑',
-        description: 'Erfrischend leicht',
-      ),
-      MensaFood(
-        name: 'Nougatcreme',
-        category: 'Desserts',
-        emoji: '🍫',
-        description: 'Mit Mandel-Nusscrunch',
-      ),
-      MensaFood(
-        name: 'Bayrisch Creme',
-        category: 'Desserts',
-        emoji: '🟡',
-        description: 'Mit Aprikosensauce',
-      ),
-      MensaFood(
-        name: 'Orangen-Passionsfrucht Quark',
-        category: 'Desserts',
-        emoji: '🍊',
-        description: 'Tropisch frisch',
-      ),
-      MensaFood(
-        name: 'Superfood Chiashake',
-        category: 'Desserts',
-        emoji: '🫐',
-        description: 'Mit Mandelmilch und Waldfrüchten',
-      ),
-    ],
-  };
+  // Kategorien mit Gerichten (wird aus JSON geladen)
+  // final Map<String, List<MensaFood>> _menuByCategory = {};
 
   // Liste für echte Bewertungen (wird erweitert wenn User bewertet)
   final List<FeedbackHistory> _userFeedback = [];
@@ -168,6 +55,10 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     setState(() {
       _selectedIndex = index;
       _selectedCategory = null; // Reset category when switching tabs
+      // Reset audio/rating state when switching tabs
+      _hasRecordedAudio = false;
+      _selectedRating = null;
+      _isRecording = false;
     });
   }
 
@@ -186,8 +77,35 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   @override
   void initState() {
     super.initState();
+    _loadMenuData();
     // Event Listener für Audio-Transkription kann hier hinzugefügt werden
     // wenn das HTML-Element verfügbar ist
+  }
+  
+  Future<void> _loadMenuData() async {
+    try {
+      final String jsonString = await rootBundle.loadString('assets/menu/menu.json');
+      final Map<String, dynamic> jsonData = json.decode(jsonString);
+      
+      setState(() {
+        _menuByCategory = {};
+        jsonData.forEach((category, items) {
+          _menuByCategory[category] = (items as List)
+              .map((item) => MensaFood(
+                    name: item['name'],
+                    category: category,
+                    description: item['description'],
+                  ))
+              .toList();
+        });
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Fehler beim Laden der Menü-Daten: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
   
   void _toggleRecording() {
@@ -199,6 +117,10 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
       js.context.callMethod('startRecording');
     } else {
       js.context.callMethod('stopRecording');
+      // Mark that audio was recorded
+      setState(() {
+        _hasRecordedAudio = true;
+      });
     }
   }
 
@@ -207,10 +129,11 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
-        child: _getSelectedPage(),
+        child: _isLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : _getSelectedPage(),
       ),
-      floatingActionButton: _selectedIndex == 0 ? _buildRecordingButton() : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      // Audio-Button nur noch im Detail-Modal, nicht mehr als floating button
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
@@ -244,9 +167,9 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
 
   Widget _buildCategoryGrid() {
     final categories = [
-      {'name': 'Hauptgerichte', 'emoji': '🍖', 'color': Colors.brown, 'count': _menuByCategory['Essen']!.length},
-      {'name': 'Beilagen', 'emoji': '🥔', 'color': Colors.green, 'count': _menuByCategory['Beilagen']!.length},
-      {'name': 'Desserts', 'emoji': '🍰', 'color': Colors.pink, 'count': _menuByCategory['Desserts']!.length},
+      {'name': 'Hauptgerichte', 'emoji': '🍖', 'color': Colors.brown, 'count': _menuByCategory['Essen']?.length ?? 0},
+      {'name': 'Beilagen', 'emoji': '🥔', 'color': Colors.green, 'count': _menuByCategory['Beilagen']?.length ?? 0},
+      {'name': 'Desserts', 'emoji': '🍰', 'color': Colors.pink, 'count': _menuByCategory['Desserts']?.length ?? 0},
     ];
 
     return Padding(
@@ -378,7 +301,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   }
 
   Widget _buildFoodGrid(String category) {
-    final foods = _menuByCategory[category]!;
+    final foods = _menuByCategory[category] ?? [];
     
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -449,7 +372,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Emoji als großes Icon
+              // Icon basierend auf Kategorie (kein Emoji mehr)
               Container(
                 width: 60,
                 height: 60,
@@ -458,9 +381,10 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: Center(
-                  child: Text(
-                    food.emoji,
-                    style: const TextStyle(fontSize: 32),
+                  child: Icon(
+                    _getCategoryIconForFood(food.category),
+                    size: 32,
+                    color: _getCategoryColorForFood(food.category),
                   ),
                 ),
               ),
@@ -529,6 +453,20 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
         return Colors.pink;
       default:
         return Colors.grey;
+    }
+  }
+
+  // Hilfsfunktion um das richtige Icon für jede Kategorie zu bekommen  
+  IconData _getCategoryIconForFood(String category) {
+    switch (category) {
+      case 'Essen':
+        return Icons.restaurant;
+      case 'Beilagen':
+        return Icons.eco;
+      case 'Desserts':
+        return Icons.cake;
+      default:
+        return Icons.restaurant_menu;
     }
   }
 
@@ -767,10 +705,6 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                 '${feedback.date.day}.${feedback.date.month}',
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.play_arrow, color: Colors.orange),
-              ),
             ],
           ),
         ],
@@ -867,7 +801,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     if (category == 'Hauptgerichte') categoryKey = 'Essen';
     
     int categoryCount = _userFeedback.where((feedback) => 
-      _menuByCategory[categoryKey]!.any((food) => food.name == feedback.food)
+      _menuByCategory[categoryKey]?.any((food) => food.name == feedback.food) ?? false
     ).length;
     return categoryCount / _userFeedback.length;
   }
@@ -1088,59 +1022,11 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    'NEU',
-                    style: TextStyle(
-                      color: Colors.orange,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                // "NEU" Badge entfernt
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildRecordingButton() {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: _isRecording 
-            ? [Colors.red.shade400, Colors.red.shade600]
-            : [Colors.orange.shade400, Colors.orange.shade600],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: (_isRecording ? Colors.red : Colors.orange).withAlpha((0.4 * 255).round()),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(40),
-          onTap: _toggleRecording,
-          child: Icon(
-            _isRecording ? Icons.stop : Icons.mic,
-            color: Colors.white,
-            size: 32,
-          ),
-        ),
       ),
     );
   }
@@ -1184,101 +1070,197 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   }
 
   void _showFoodDetail(MensaFood food) {
+    // Reset state when opening food detail
+    setState(() {
+      _hasRecordedAudio = false;
+      _selectedRating = null;
+      _isRecording = false;
+    });
+    
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: 400,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      isScrollControlled: true,
+      builder: (context) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter setModalState) {
+          return Container(
+            height: 500,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(food.emoji, style: const TextStyle(fontSize: 40)),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          food.name,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 2,
+                  Row(
+                    children: [
+                      Icon(
+                        _getCategoryIconForFood(food.category),
+                        size: 40,
+                        color: _getCategoryColorForFood(food.category),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              food.name,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 2,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              food.description,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          food.description,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      const Text(
+                        'Wie hat es dir geschmeckt?',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                      if (_hasRecordedAudio)
+                        Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.red.shade300),
+                          ),
+                          child: Text(
+                            'Pflicht',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red.shade700,
+                            ),
                           ),
                         ),
-                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildRatingButton(1, 'Schlecht', food, setModalState),
+                      _buildRatingButton(2, 'Okay', food, setModalState),
+                      _buildRatingButton(3, 'Gut', food, setModalState),
+                      _buildRatingButton(4, 'Super', food, setModalState),
+                      _buildRatingButton(5, 'Perfekt', food, setModalState),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        _toggleRecording();
+                        setModalState(() {});
+                      },
+                      icon: Icon(_isRecording ? Icons.stop : Icons.mic),
+                      label: Text(_isRecording ? 'Aufnahme stoppen' : 'Audio-Kommentar aufnehmen'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _isRecording ? Colors.red : Colors.orange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (_hasRecordedAudio) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.green.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Audio aufgenommen! Bitte bewerte mit Sternen.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.green.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _submitRating(food),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Bewertung abschicken',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              const Text(
-                'Wie hat es dir geschmeckt?',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildRatingButton(1, 'Schlecht', food),
-                  _buildRatingButton(2, 'Okay', food),
-                  _buildRatingButton(3, 'Gut', food),
-                  _buildRatingButton(4, 'Super', food),
-                  _buildRatingButton(5, 'Perfekt', food),
-                ],
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _toggleRecording,
-                  icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-                  label: Text(_isRecording ? 'Aufnahme stoppen' : 'Audio-Kommentar aufnehmen'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isRecording ? Colors.red : Colors.orange,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildRatingButton(int rating, String label, MensaFood food) {
+  Widget _buildRatingButton(int rating, String label, MensaFood food, StateSetter setModalState) {
+    bool isSelected = _selectedRating == rating;
+    
     return Column(
       children: [
         GestureDetector(
-          onTap: () => _addRating(food, rating, label),
+          onTap: () {
+            setModalState(() {
+              _selectedRating = rating;
+            });
+            setState(() {
+              _selectedRating = rating;
+            });
+          },
           child: Container(
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: isSelected ? Colors.orange.shade100 : Colors.grey[100],
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.orange.shade200, width: 2),
+              border: Border.all(
+                color: isSelected ? Colors.orange.shade400 : Colors.orange.shade200, 
+                width: isSelected ? 3 : 2
+              ),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1287,17 +1269,17 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(rating, (index) => Icon(
                     Icons.star,
-                    color: Colors.amber,
+                    color: isSelected ? Colors.orange : Colors.amber,
                     size: rating <= 2 ? 12 : (rating == 3 ? 10 : 8),
                   )),
                 ),
                 if (rating > 3) const SizedBox(height: 2),
                 Text(
                   '$rating',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey,
+                    color: isSelected ? Colors.orange.shade700 : Colors.grey,
                   ),
                 ),
               ],
@@ -1305,8 +1287,78 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
           ),
         ),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 12)),
+        Text(
+          label, 
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? Colors.orange.shade700 : Colors.grey[700],
+          )
+        ),
       ],
+    );
+  }
+
+  void _submitRating(MensaFood food) {
+    // Validation: If audio was recorded, rating is required
+    if (_hasRecordedAudio && _selectedRating == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bitte wähle eine Sterne-Bewertung aus, da du eine Audio-Aufnahme gemacht hast!'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+    
+    // If no rating selected and no audio, require rating
+    if (_selectedRating == null && !_hasRecordedAudio) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bitte wähle eine Sterne-Bewertung aus!'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    
+    Navigator.pop(context);
+    
+    // Add rating to feedback list
+    String ratingLabel = '';
+    switch (_selectedRating!) {
+      case 1: ratingLabel = 'Schlecht'; break;
+      case 2: ratingLabel = 'Okay'; break;
+      case 3: ratingLabel = 'Gut'; break;
+      case 4: ratingLabel = 'Super'; break;
+      case 5: ratingLabel = 'Perfekt'; break;
+    }
+    
+    setState(() {
+      _userFeedback.insert(0, FeedbackHistory(
+        food: food.name,
+        emoji: '',
+        rating: _selectedRating!,
+        comment: _hasRecordedAudio 
+          ? 'Bewertung: $ratingLabel (mit Audio-Kommentar)' 
+          : 'Bewertung: $ratingLabel',
+        date: DateTime.now(),
+        audioLength: _hasRecordedAudio ? 15 : 0, // Placeholder for audio length
+      ));
+      
+      // Reset state
+      _selectedRating = null;
+      _hasRecordedAudio = false;
+      _isRecording = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Bewertung für "${food.name}" gespeichert!'),
+        backgroundColor: Colors.green,
+      ),
     );
   }
 
@@ -1317,7 +1369,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     setState(() {
       _userFeedback.insert(0, FeedbackHistory(
         food: food.name,
-        emoji: food.emoji,
+        emoji: _getCategoryIconForFood(food.category).toString(), // Icon als String
         rating: rating,
         comment: 'Bewertung: $ratingLabel', // Wird später durch Audio-Transkript ersetzt
         date: DateTime.now(),
@@ -1337,13 +1389,11 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
 class MensaFood {
   final String name;
   final String category;
-  final String emoji;
   final String description;
 
   MensaFood({
     required this.name,
     required this.category,
-    required this.emoji,
     required this.description,
   });
 }
