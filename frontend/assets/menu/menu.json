@@ -1,0 +1,90 @@
+{
+  "Essen": [
+    {
+      "name": "As{
+  "Essen": [
+    {
+      "name": "Asiatischer Wok mit Hähnchenstreifen",
+      "description": "Mit Kokoscurrysauce"
+    },
+    {
+      "name": "Bratwurst mit Currysauce",
+      "description": "Mit Pommes frites"
+    },
+    {
+      "name": "Vegane Bratwurst",
+      "description": "Mit Currysauce und Pommes"
+    },
+    {
+      "name": "Spießbraten",
+      "description": "Mit Paprikarahmsauce"
+    },
+    {
+      "name": "Grünkohl-Hanfratling",
+      "description": "Mit Kartoffelwürfeln"
+    },
+    {
+      "name": "Burrito mit Chili sin Carne",
+      "description": "Mit Guacamole"
+    },
+    {
+      "name": "Chicken-Cheese Burger",
+      "description": "Mit Cheddar und Honig-Senfcreme"
+    },
+    {
+      "name": "Cevapcici vom Rind",
+      "description": "Mit Barbecuesauce"
+    }
+  ],
+  "Beilagen": [
+    {
+      "name": "Beilagensalat Vinaigrette",
+      "description": "Herzhaft"
+    },
+    {
+      "name": "Apfelrotkohl",
+      "description": "Traditionell zubereitet"
+    },
+    {
+      "name": "Risoléekartoffeln",
+      "description": "Goldbraun gebraten"
+    },
+    {
+      "name": "Weißkrautsalat",
+      "description": "Frisch und knackig"
+    },
+    {
+      "name": "Petersilienkartoffeln",
+      "description": "Mit frischer Petersilie"
+    }
+  ],
+  "Desserts": [
+    {
+      "name": "Vanillemousse mit Kirschen",
+      "description": "Cremig und fruchtig"
+    },
+    {
+      "name": "Quarkspeise Pfirsich",
+      "description": "Erfrischend leicht"
+    },
+    {
+      "name": "Nougatcreme",
+      "description": "Mit Mandel-Nusscrunch"
+    },
+    {
+      "name": "Bayrisch Creme",
+      "description": "Mit Aprikosensauce"
+    },
+    {
+      "name": "Orangen-Passionsfrucht Quark",
+      "description": "Tropisch frisch"
+    },
+    {
+      "name": "Superfood Chiashake",
+      "description": "Mit Mandelmilch und Waldfrüchten"
+    }
+  ]
+}
+    }
+  ]
+}
