@@ -209,8 +209,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
       body: SafeArea(
         child: _getSelectedPage(),
       ),
-      floatingActionButton: _selectedIndex == 0 ? _buildRecordingButton() : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      // Audio-Button nur noch im Detail-Modal, nicht mehr als floating button
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
@@ -1088,59 +1087,11 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    'NEU',
-                    style: TextStyle(
-                      color: Colors.orange,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                // "NEU" Badge entfernt
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildRecordingButton() {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: _isRecording 
-            ? [Colors.red.shade400, Colors.red.shade600]
-            : [Colors.orange.shade400, Colors.orange.shade600],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: (_isRecording ? Colors.red : Colors.orange).withAlpha((0.4 * 255).round()),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(40),
-          onTap: _toggleRecording,
-          child: Icon(
-            _isRecording ? Icons.stop : Icons.mic,
-            color: Colors.white,
-            size: 32,
-          ),
-        ),
       ),
     );
   }
