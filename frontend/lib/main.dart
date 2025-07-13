@@ -696,6 +696,15 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (feedback.audioLength > 0) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Transkript: "Hier wird später der transkribierte Text stehen"',
+                    style: TextStyle(fontSize: 12, color: Colors.blue[600], fontStyle: FontStyle.italic),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ],
             ),
           ),
