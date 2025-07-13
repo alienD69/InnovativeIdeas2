@@ -1,9 +1,4 @@
-children: [
-                Row(
-                  children: [
-                    Icon(
-                      _getCategoryIconForFood(food.category),
-                      size: import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:convert';
 import 'dart:js' as js;
@@ -1378,7 +1373,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     setState(() {
       _userFeedback.insert(0, FeedbackHistory(
         food: food.name,
-        emoji: food.emoji,
+        emoji: _getCategoryIconForFood(food.category).toString(), // Icon als String
         rating: rating,
         comment: 'Bewertung: $ratingLabel', // Wird später durch Audio-Transkript ersetzt
         date: DateTime.now(),
