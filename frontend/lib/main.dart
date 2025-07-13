@@ -705,10 +705,6 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                 '${feedback.date.day}.${feedback.date.month}',
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.play_arrow, color: Colors.orange),
-              ),
             ],
           ),
         ],
