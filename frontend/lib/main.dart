@@ -1343,7 +1343,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     setState(() {
       _userFeedback.insert(0, FeedbackHistory(
         food: food.name,
-        emoji: _getCategoryIconForFood(food.category).toString(), // Icon als String
+        emoji: '',
         rating: _selectedRating!,
         comment: _hasRecordedAudio 
           ? 'Bewertung: $ratingLabel (mit Audio-Kommentar)' 
