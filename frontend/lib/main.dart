@@ -1,4 +1,11 @@
-import 'package:flutter/material.dart';
+children: [
+                Row(
+                  children: [
+                    Icon(
+                      _getCategoryIconForFood(food.category),
+                      size: import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'dart:convert';
 import 'dart:js' as js;
 
 void main() {
@@ -38,130 +45,13 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   String? _selectedCategory;
   bool _hasRecordedAudio = false;
   int? _selectedRating;
+  
+  // Wird aus JSON geladen
+  Map<String, List<MensaFood>> _menuByCategory = {};
+  bool _isLoading = true;
 
-  // Kategorien mit Gerichten (ohne vorgegebene Bewertungen)
-  final Map<String, List<MensaFood>> _menuByCategory = {
-    'Essen': [
-      MensaFood(
-        name: 'Asiatischer Wok mit Hähnchenstreifen',
-        category: 'Essen',
-        emoji: '🍜',
-        description: 'Mit Kokoscurrysauce',
-      ),
-      MensaFood(
-        name: 'Bratwurst mit Currysauce',
-        category: 'Essen',
-        emoji: '🌭',
-        description: 'Mit Pommes frites',
-      ),
-      MensaFood(
-        name: 'Vegane Bratwurst',
-        category: 'Essen',
-        emoji: '🌱',
-        description: 'Mit Currysauce und Pommes',
-      ),
-      MensaFood(
-        name: 'Spießbraten',
-        category: 'Essen',
-        emoji: '🥩',
-        description: 'Mit Paprikarahmsauce',
-      ),
-      MensaFood(
-        name: 'Grünkohl-Hanfratling',
-        category: 'Essen',
-        emoji: '🥬',
-        description: 'Mit Kartoffelwürfeln',
-      ),
-      MensaFood(
-        name: 'Burrito mit Chili sin Carne',
-        category: 'Essen',
-        emoji: '🌯',
-        description: 'Mit Guacamole',
-      ),
-      MensaFood(
-        name: 'Chicken-Cheese Burger',
-        category: 'Essen',
-        emoji: '🍔',
-        description: 'Mit Cheddar und Honig-Senfcreme',
-      ),
-      MensaFood(
-        name: 'Cevapcici vom Rind',
-        category: 'Essen',
-        emoji: '🍖',
-        description: 'Mit Barbecuesauce',
-      ),
-    ],
-    'Beilagen': [
-      MensaFood(
-        name: 'Beilagensalat Vinaigrette',
-        category: 'Beilagen',
-        emoji: '🥗',
-        description: 'Herzhaft',
-      ),
-      MensaFood(
-        name: 'Apfelrotkohl',
-        category: 'Beilagen',
-        emoji: '🟣',
-        description: 'Traditionell zubereitet',
-      ),
-      MensaFood(
-        name: 'Risoléekartoffeln',
-        category: 'Beilagen',
-        emoji: '🥔',
-        description: 'Goldbraun gebraten',
-      ),
-      MensaFood(
-        name: 'Weißkrautsalat',
-        category: 'Beilagen',
-        emoji: '🥬',
-        description: 'Frisch und knackig',
-      ),
-      MensaFood(
-        name: 'Petersilienkartoffeln',
-        category: 'Beilagen',
-        emoji: '🌿',
-        description: 'Mit frischer Petersilie',
-      ),
-    ],
-    'Desserts': [
-      MensaFood(
-        name: 'Vanillemousse mit Kirschen',
-        category: 'Desserts',
-        emoji: '🍒',
-        description: 'Cremig und fruchtig',
-      ),
-      MensaFood(
-        name: 'Quarkspeise Pfirsich',
-        category: 'Desserts',
-        emoji: '🍑',
-        description: 'Erfrischend leicht',
-      ),
-      MensaFood(
-        name: 'Nougatcreme',
-        category: 'Desserts',
-        emoji: '🍫',
-        description: 'Mit Mandel-Nusscrunch',
-      ),
-      MensaFood(
-        name: 'Bayrisch Creme',
-        category: 'Desserts',
-        emoji: '🟡',
-        description: 'Mit Aprikosensauce',
-      ),
-      MensaFood(
-        name: 'Orangen-Passionsfrucht Quark',
-        category: 'Desserts',
-        emoji: '🍊',
-        description: 'Tropisch frisch',
-      ),
-      MensaFood(
-        name: 'Superfood Chiashake',
-        category: 'Desserts',
-        emoji: '🫐',
-        description: 'Mit Mandelmilch und Waldfrüchten',
-      ),
-    ],
-  };
+  // Kategorien mit Gerichten (wird aus JSON geladen)
+  // final Map<String, List<MensaFood>> _menuByCategory = {};
 
   // Liste für echte Bewertungen (wird erweitert wenn User bewertet)
   final List<FeedbackHistory> _userFeedback = [];
@@ -192,8 +82,35 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   @override
   void initState() {
     super.initState();
+    _loadMenuData();
     // Event Listener für Audio-Transkription kann hier hinzugefügt werden
     // wenn das HTML-Element verfügbar ist
+  }
+  
+  Future<void> _loadMenuData() async {
+    try {
+      final String jsonString = await rootBundle.loadString('assets/menu/menu.json');
+      final Map<String, dynamic> jsonData = json.decode(jsonString);
+      
+      setState(() {
+        _menuByCategory = {};
+        jsonData.forEach((category, items) {
+          _menuByCategory[category] = (items as List)
+              .map((item) => MensaFood(
+                    name: item['name'],
+                    category: category,
+                    description: item['description'],
+                  ))
+              .toList();
+        });
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Fehler beim Laden der Menü-Daten: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
   
   void _toggleRecording() {
@@ -217,7 +134,9 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
-        child: _getSelectedPage(),
+        child: _isLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : _getSelectedPage(),
       ),
       // Audio-Button nur noch im Detail-Modal, nicht mehr als floating button
       bottomNavigationBar: _buildBottomNavigationBar(),
@@ -253,9 +172,9 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
 
   Widget _buildCategoryGrid() {
     final categories = [
-      {'name': 'Hauptgerichte', 'emoji': '🍖', 'color': Colors.brown, 'count': _menuByCategory['Essen']!.length},
-      {'name': 'Beilagen', 'emoji': '🥔', 'color': Colors.green, 'count': _menuByCategory['Beilagen']!.length},
-      {'name': 'Desserts', 'emoji': '🍰', 'color': Colors.pink, 'count': _menuByCategory['Desserts']!.length},
+      {'name': 'Hauptgerichte', 'emoji': '🍖', 'color': Colors.brown, 'count': _menuByCategory['Essen']?.length ?? 0},
+      {'name': 'Beilagen', 'emoji': '🥔', 'color': Colors.green, 'count': _menuByCategory['Beilagen']?.length ?? 0},
+      {'name': 'Desserts', 'emoji': '🍰', 'color': Colors.pink, 'count': _menuByCategory['Desserts']?.length ?? 0},
     ];
 
     return Padding(
@@ -387,7 +306,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   }
 
   Widget _buildFoodGrid(String category) {
-    final foods = _menuByCategory[category]!;
+    final foods = _menuByCategory[category] ?? [];
     
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -458,7 +377,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Emoji als großes Icon
+              // Icon basierend auf Kategorie (kein Emoji mehr)
               Container(
                 width: 60,
                 height: 60,
@@ -467,9 +386,10 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: Center(
-                  child: Text(
-                    food.emoji,
-                    style: const TextStyle(fontSize: 32),
+                  child: Icon(
+                    _getCategoryIconForFood(food.category),
+                    size: 32,
+                    color: _getCategoryColorForFood(food.category),
                   ),
                 ),
               ),
@@ -538,6 +458,20 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
         return Colors.pink;
       default:
         return Colors.grey;
+    }
+  }
+
+  // Hilfsfunktion um das richtige Icon für jede Kategorie zu bekommen  
+  IconData _getCategoryIconForFood(String category) {
+    switch (category) {
+      case 'Essen':
+        return Icons.restaurant;
+      case 'Beilagen':
+        return Icons.eco;
+      case 'Desserts':
+        return Icons.cake;
+      default:
+        return Icons.restaurant_menu;
     }
   }
 
@@ -876,7 +810,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     if (category == 'Hauptgerichte') categoryKey = 'Essen';
     
     int categoryCount = _userFeedback.where((feedback) => 
-      _menuByCategory[categoryKey]!.any((food) => food.name == feedback.food)
+      _menuByCategory[categoryKey]?.any((food) => food.name == feedback.food) ?? false
     ).length;
     return categoryCount / _userFeedback.length;
   }
@@ -1171,7 +1105,11 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                 children: [
                   Row(
                     children: [
-                      Text(food.emoji, style: const TextStyle(fontSize: 40)),
+                      Icon(
+                        _getCategoryIconForFood(food.category),
+                        size: 40,
+                        color: _getCategoryColorForFood(food.category),
+                      ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
@@ -1410,7 +1348,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     setState(() {
       _userFeedback.insert(0, FeedbackHistory(
         food: food.name,
-        emoji: food.emoji,
+        emoji: _getCategoryIconForFood(food.category).toString(), // Icon als String
         rating: _selectedRating!,
         comment: _hasRecordedAudio 
           ? 'Bewertung: $ratingLabel (mit Audio-Kommentar)' 
@@ -1460,13 +1398,11 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
 class MensaFood {
   final String name;
   final String category;
-  final String emoji;
   final String description;
 
   MensaFood({
     required this.name,
     required this.category,
-    required this.emoji,
     required this.description,
   });
 }
