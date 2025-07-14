@@ -1127,7 +1127,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
       builder: (context) => StatefulBuilder(
         builder: (BuildContext context, StateSetter setModalState) {
           return Container(
-            height: MediaQuery.of(context).size.height * 0.8, // Größer für Textfeld
+            height: MediaQuery.of(context).size.height * 0.9, // Größer für Textfeld
             decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
