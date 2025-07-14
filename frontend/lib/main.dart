@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:convert';
 import 'dart:js' as js;
-import 'dart:html' as html; // Für HTTP-Requests
+import 'package:http/http.dart' as http; // Bessere HTTP-Library
 
 void main() {
   runApp(const MyApp());
@@ -130,29 +130,41 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     }
   }
 
-  // Funktion zum Senden von Text-Feedback an das Backend
+  // Funktion zum Senden von Text-Feedback an das Backend (mit http package)
   Future<void> _sendTextFeedback(String foodName, String textFeedback) async {
     try {
-      final response = await html.HttpRequest.request(
-        'http://localhost:5001/save_text_feedback',
-        method: 'POST',
-        requestHeaders: {
+      final url = Uri.parse('http://localhost:5001/save_text_feedback');
+      final response = await http.post(
+        url,
+        headers: {
           'Content-Type': 'application/json',
         },
-        sendData: json.encode({
+        body: json.encode({
           'food_name': foodName,
           'feedback': textFeedback,
           'rating': _selectedRating,
         }),
       );
       
-      if (response.status == 200) {
+      if (response.statusCode == 200) {
         print('Text-Feedback erfolgreich gespeichert');
+        final responseData = json.decode(response.body);
+        print('Backend Response: ${responseData['message']}');
       } else {
-        print('Fehler beim Speichern: ${response.status}');
+        print('Fehler beim Speichern: ${response.statusCode}');
+        print('Error Response: ${response.body}');
       }
     } catch (e) {
       print('Fehler beim Senden des Text-Feedbacks: $e');
+      // Zeige Fehlermeldung an User
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Fehler beim Speichern: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
