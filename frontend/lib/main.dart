@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:convert';
 import 'dart:js' as js;
+import 'dart:html' as html; // Für HTTP-Requests
 
 void main() {
   runApp(const MyApp());
@@ -41,12 +42,12 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   bool _hasRecordedAudio = false;
   int? _selectedRating;
   
+  // Textfeld Controller
+  final TextEditingController _textFeedbackController = TextEditingController();
+  
   // Wird aus JSON geladen
   Map<String, List<MensaFood>> _menuByCategory = {};
   bool _isLoading = true;
-
-  // Kategorien mit Gerichten (wird aus JSON geladen)
-  // final Map<String, List<MensaFood>> _menuByCategory = {};
 
   // Liste für echte Bewertungen (wird erweitert wenn User bewertet)
   final List<FeedbackHistory> _userFeedback = [];
@@ -59,6 +60,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
       _hasRecordedAudio = false;
       _selectedRating = null;
       _isRecording = false;
+      _textFeedbackController.clear(); // Text zurücksetzen
     });
   }
 
@@ -78,8 +80,12 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   void initState() {
     super.initState();
     _loadMenuData();
-    // Event Listener für Audio-Transkription kann hier hinzugefügt werden
-    // wenn das HTML-Element verfügbar ist
+  }
+  
+  @override
+  void dispose() {
+    _textFeedbackController.dispose();
+    super.dispose();
   }
   
   Future<void> _loadMenuData() async {
@@ -124,6 +130,32 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     }
   }
 
+  // Funktion zum Senden von Text-Feedback an das Backend
+  Future<void> _sendTextFeedback(String foodName, String textFeedback) async {
+    try {
+      final response = await html.HttpRequest.request(
+        'http://localhost:5001/save_text_feedback',
+        method: 'POST',
+        requestHeaders: {
+          'Content-Type': 'application/json',
+        },
+        sendData: json.encode({
+          'food_name': foodName,
+          'feedback': textFeedback,
+          'rating': _selectedRating,
+        }),
+      );
+      
+      if (response.status == 200) {
+        print('Text-Feedback erfolgreich gespeichert');
+      } else {
+        print('Fehler beim Speichern: ${response.status}');
+      }
+    } catch (e) {
+      print('Fehler beim Senden des Text-Feedbacks: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -133,7 +165,6 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
           ? const Center(child: CircularProgressIndicator())
           : _getSelectedPage(),
       ),
-      // Audio-Button nur noch im Detail-Modal, nicht mehr als floating button
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
@@ -1005,7 +1036,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Audio-Bewertungen',
+                        'Audio & Text-Bewertungen',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -1013,7 +1044,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                         ),
                       ),
                       Text(
-                        'Einfach sprechen statt tippen! 🎤',
+                        'Sprechen oder schreiben - du entscheidest! 🎤📝',
                         style: TextStyle(
                           color: Colors.white.withAlpha((0.8 * 255).round()),
                           fontSize: 12,
@@ -1022,7 +1053,6 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                     ],
                   ),
                 ),
-                // "NEU" Badge entfernt
               ],
             ),
           ),
@@ -1075,6 +1105,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
       _hasRecordedAudio = false;
       _selectedRating = null;
       _isRecording = false;
+      _textFeedbackController.clear(); // Text zurücksetzen
     });
     
     showModalBottomSheet(
@@ -1084,7 +1115,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
       builder: (context) => StatefulBuilder(
         builder: (BuildContext context, StateSetter setModalState) {
           return Container(
-            height: 500,
+            height: MediaQuery.of(context).size.height * 0.8, // Größer für Textfeld
             decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -1094,6 +1125,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Header mit Gericht-Info
                   Row(
                     children: [
                       Icon(
@@ -1128,31 +1160,11 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      const Text(
-                        'Wie hat es dir geschmeckt?',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
-                      if (_hasRecordedAudio)
-                        Container(
-                          margin: const EdgeInsets.only(left: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.red.shade300),
-                          ),
-                          child: Text(
-                            'Pflicht',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.red.shade700,
-                            ),
-                          ),
-                        ),
-                    ],
+                  
+                  // Sterne-Bewertung
+                  const Text(
+                    'Wie hat es dir geschmeckt?',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -1166,6 +1178,34 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                     ],
                   ),
                   const SizedBox(height: 24),
+                  
+                  // Text-Feedback Sektion
+                  const Text(
+                    'Schriftliches Feedback (optional)',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      controller: _textFeedbackController,
+                      maxLines: 4,
+                      maxLength: 500,
+                      decoration: InputDecoration(
+                        hintText: 'Beschreibe deine Erfahrung mit diesem Gericht...',
+                        hintStyle: TextStyle(color: Colors.grey[500]),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.all(16),
+                        counterStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Audio-Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -1185,6 +1225,8 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                       ),
                     ),
                   ),
+                  
+                  // Audio Status
                   if (_hasRecordedAudio) ...[
                     const SizedBox(height: 12),
                     Container(
@@ -1199,7 +1241,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                           Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            'Audio aufgenommen! Bitte bewerte mit Sternen.',
+                            'Audio aufgenommen!',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.green.shade700,
@@ -1209,7 +1251,10 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 24),
+                  
+                  const Spacer(),
+                  
+                  // Submit Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -1300,20 +1345,8 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   }
 
   void _submitRating(MensaFood food) {
-    // Validation: If audio was recorded, rating is required
-    if (_hasRecordedAudio && _selectedRating == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Bitte wähle eine Sterne-Bewertung aus, da du eine Audio-Aufnahme gemacht hast!'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
-        ),
-      );
-      return;
-    }
-    
-    // If no rating selected and no audio, require rating
-    if (_selectedRating == null && !_hasRecordedAudio) {
+    // Validation: Mindestens eine Bewertung (Sterne) muss ausgewählt sein
+    if (_selectedRating == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Bitte wähle eine Sterne-Bewertung aus!'),
@@ -1326,6 +1359,12 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     
     Navigator.pop(context);
     
+    // Text-Feedback an Backend senden (falls vorhanden)
+    String textFeedback = _textFeedbackController.text.trim();
+    if (textFeedback.isNotEmpty) {
+      _sendTextFeedback(food.name, textFeedback);
+    }
+    
     // Add rating to feedback list
     String ratingLabel = '';
     switch (_selectedRating!) {
@@ -1336,14 +1375,27 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
       case 5: ratingLabel = 'Perfekt'; break;
     }
     
+    // Kommentar zusammenstellen
+    String finalComment = 'Bewertung: $ratingLabel';
+    List<String> feedbackParts = [];
+    
+    if (_hasRecordedAudio) {
+      feedbackParts.add('Audio-Kommentar');
+    }
+    if (textFeedback.isNotEmpty) {
+      feedbackParts.add('Text: ${textFeedback.length > 50 ? '${textFeedback.substring(0, 50)}...' : textFeedback}');
+    }
+    
+    if (feedbackParts.isNotEmpty) {
+      finalComment += ' (${feedbackParts.join(', ')})';
+    }
+    
     setState(() {
       _userFeedback.insert(0, FeedbackHistory(
         food: food.name,
         emoji: '',
         rating: _selectedRating!,
-        comment: _hasRecordedAudio 
-          ? 'Bewertung: $ratingLabel (mit Audio-Kommentar)' 
-          : 'Bewertung: $ratingLabel',
+        comment: finalComment,
         date: DateTime.now(),
         audioLength: _hasRecordedAudio ? 15 : 0, // Placeholder for audio length
       ));
@@ -1352,29 +1404,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
       _selectedRating = null;
       _hasRecordedAudio = false;
       _isRecording = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Bewertung für "${food.name}" gespeichert!'),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-
-  void _addRating(MensaFood food, int rating, String ratingLabel) {
-    Navigator.pop(context);
-    
-    // Neue Bewertung zur Liste hinzufügen
-    setState(() {
-      _userFeedback.insert(0, FeedbackHistory(
-        food: food.name,
-        emoji: _getCategoryIconForFood(food.category).toString(), // Icon als String
-        rating: rating,
-        comment: 'Bewertung: $ratingLabel', // Wird später durch Audio-Transkript ersetzt
-        date: DateTime.now(),
-        audioLength: 0, // Wird später durch echte Audio-Länge ersetzt
-      ));
+      _textFeedbackController.clear();
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
