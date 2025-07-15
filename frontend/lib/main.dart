@@ -65,9 +65,14 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   }
 
   void _selectCategory(String category) {
-    setState(() {
-      _selectedCategory = category;
-    });
+    // Spezielle Behandlung für "Sonstiges"
+    if (category == 'Sonstiges') {
+      _showSonstigesFeedback();
+    } else {
+      setState(() {
+        _selectedCategory = category;
+      });
+    }
   }
 
   void _goBackToCategories() {
@@ -210,9 +215,10 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
 
   Widget _buildCategoryGrid() {
     final categories = [
-      {'name': 'Hauptgerichte', 'emoji': '🍖', 'color': Colors.brown, 'count': _menuByCategory['Essen']?.length ?? 0},
-      {'name': 'Beilagen', 'emoji': '🥔', 'color': Colors.green, 'count': _menuByCategory['Beilagen']?.length ?? 0},
-      {'name': 'Desserts', 'emoji': '🍰', 'color': Colors.pink, 'count': _menuByCategory['Desserts']?.length ?? 0},
+      {'name': 'Hauptgerichte', 'emoji': '🍖', 'color': Colors.brown, 'count': _menuByCategory['Essen']?.length ?? 0, 'type': 'menu'},
+      {'name': 'Beilagen', 'emoji': '🥔', 'color': Colors.green, 'count': _menuByCategory['Beilagen']?.length ?? 0, 'type': 'menu'},
+      {'name': 'Desserts', 'emoji': '🍰', 'color': Colors.pink, 'count': _menuByCategory['Desserts']?.length ?? 0, 'type': 'menu'},
+      {'name': 'Sonstiges', 'emoji': '💭', 'color': Colors.purple, 'count': null, 'type': 'direct'}, // Neue Kategorie
     ];
 
     return Padding(
@@ -246,7 +252,8 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   }
 
   Widget _buildVerticalCategoryCard(Map<String, dynamic> category) {
-    final categoryKey = category['name'] == 'Hauptgerichte' ? 'Essen' : category['name'];
+    final categoryKey = category['name'] == 'Hauptgerichte' ? 'Essen' : 
+                       category['name'] == 'Sonstiges' ? 'Sonstiges' : category['name'];
     
     return GestureDetector(
       onTap: () => _selectCategory(categoryKey),
@@ -303,7 +310,9 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '${category['count']} Gerichte verfügbar',
+                    category['type'] == 'direct' 
+                      ? 'Allgemeines Feedback zur Mensa'
+                      : '${category['count']} Gerichte verfügbar',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[600],
@@ -321,7 +330,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
                       ),
                     ),
                     child: Text(
-                      'Jetzt bewerten',
+                      category['type'] == 'direct' ? 'Direkt bewerten' : 'Jetzt bewerten',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -485,6 +494,328 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
     );
   }
 
+  // Spezielle Funktion für Sonstiges-Feedback
+  void _showSonstigesFeedback() {
+    // Reset state when opening feedback
+    setState(() {
+      _hasRecordedAudio = false;
+      _selectedRating = null;
+      _isRecording = false;
+      _textFeedbackController.clear();
+    });
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter setModalState) {
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.9,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header für Sonstiges
+                  Row(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.purple.withAlpha((0.1 * 255).round()),
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: const Center(
+                          child: Text('💭', style: TextStyle(fontSize: 24)),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Allgemeines Mensa-Feedback',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Service, Atmosphäre, Wartezeiten, Preise...',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Sterne-Bewertung
+                  const Text(
+                    'Wie zufrieden bist du mit der Mensa?',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildSonstigesRatingButton(1, 'Schlecht', setModalState),
+                      _buildSonstigesRatingButton(2, 'Okay', setModalState),
+                      _buildSonstigesRatingButton(3, 'Gut', setModalState),
+                      _buildSonstigesRatingButton(4, 'Super', setModalState),
+                      _buildSonstigesRatingButton(5, 'Perfekt', setModalState),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Text-Feedback Sektion
+                  const Text(
+                    'Dein Feedback (optional)',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      controller: _textFeedbackController,
+                      maxLines: 4,
+                      maxLength: 500,
+                      decoration: InputDecoration(
+                        hintText: 'Was gefällt dir? Was könnte besser sein? Teile deine Gedanken mit uns...',
+                        hintStyle: TextStyle(color: Colors.grey[500]),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.all(16),
+                        counterStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Audio-Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        _toggleRecording();
+                        setModalState(() {});
+                      },
+                      icon: Icon(_isRecording ? Icons.stop : Icons.mic),
+                      label: Text(_isRecording ? 'Aufnahme stoppen' : 'Audio-Kommentar aufnehmen'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _isRecording ? Colors.red : Colors.purple,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  // Audio Status
+                  if (_hasRecordedAudio) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.green.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Audio aufgenommen!',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.green.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  
+                  const Spacer(),
+                  
+                  // Submit Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _submitSonstigesFeedback(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Feedback abschicken',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSonstigesRatingButton(int rating, String label, StateSetter setModalState) {
+    bool isSelected = _selectedRating == rating;
+    
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: () {
+            setModalState(() {
+              _selectedRating = rating;
+            });
+            setState(() {
+              _selectedRating = rating;
+            });
+          },
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.purple.shade100 : Colors.grey[100],
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: isSelected ? Colors.purple.shade400 : Colors.purple.shade200, 
+                width: isSelected ? 3 : 2
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(rating, (index) => Icon(
+                    Icons.star,
+                    color: isSelected ? Colors.purple : Colors.amber,
+                    size: rating <= 2 ? 12 : (rating == 3 ? 10 : 8),
+                  )),
+                ),
+                if (rating > 3) const SizedBox(height: 2),
+                Text(
+                  '$rating',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Colors.purple.shade700 : Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label, 
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? Colors.purple.shade700 : Colors.grey[700],
+          )
+        ),
+      ],
+    );
+  }
+
+  void _submitSonstigesFeedback() {
+    // Validation: Mindestens eine Bewertung (Sterne) muss ausgewählt sein
+    if (_selectedRating == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bitte wähle eine Sterne-Bewertung aus!'),
+          backgroundColor: Colors.purple,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    
+    Navigator.pop(context);
+    
+    // Text-Feedback an Backend senden (falls vorhanden)
+    String textFeedback = _textFeedbackController.text.trim();
+    if (textFeedback.isNotEmpty) {
+      _sendTextFeedback('Allgemeines Mensa-Feedback', textFeedback);
+    }
+    
+    // Add rating to feedback list
+    String ratingLabel = '';
+    switch (_selectedRating!) {
+      case 1: ratingLabel = 'Schlecht'; break;
+      case 2: ratingLabel = 'Okay'; break;
+      case 3: ratingLabel = 'Gut'; break;
+      case 4: ratingLabel = 'Super'; break;
+      case 5: ratingLabel = 'Perfekt'; break;
+    }
+    
+    // Kommentar zusammenstellen
+    String finalComment = 'Bewertung: $ratingLabel';
+    List<String> feedbackParts = [];
+    
+    if (_hasRecordedAudio) {
+      feedbackParts.add('Audio-Kommentar');
+    }
+    if (textFeedback.isNotEmpty) {
+      feedbackParts.add('Text: ${textFeedback.length > 50 ? '${textFeedback.substring(0, 50)}...' : textFeedback}');
+    }
+    
+    if (feedbackParts.isNotEmpty) {
+      finalComment += ' (${feedbackParts.join(', ')})';
+    }
+    
+    setState(() {
+      _userFeedback.insert(0, FeedbackHistory(
+        food: 'Allgemeines Mensa-Feedback',
+        emoji: '💭',
+        rating: _selectedRating!,
+        comment: finalComment,
+        date: DateTime.now(),
+        audioLength: _hasRecordedAudio ? 15 : 0, // Placeholder for audio length
+      ));
+      
+      // Reset state
+      _selectedRating = null;
+      _hasRecordedAudio = false;
+      _isRecording = false;
+      _textFeedbackController.clear();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Allgemeines Feedback gespeichert!'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   // Hilfsfunktion um die richtige Farbe für jede Kategorie zu bekommen
   Color _getCategoryColorForFood(String category) {
     switch (category) {
@@ -494,6 +825,8 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
         return Colors.green;
       case 'Desserts':
         return Colors.pink;
+      case 'Sonstiges':
+        return Colors.purple;
       default:
         return Colors.grey;
     }
@@ -508,6 +841,8 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
         return Icons.eco;
       case 'Desserts':
         return Icons.cake;
+      case 'Sonstiges':
+        return Icons.chat_bubble_outline;
       default:
         return Icons.restaurant_menu;
     }
@@ -831,6 +1166,7 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
           _buildCategoryBar('Essen', _getCategoryPercentage('Essen'), Colors.brown),
           _buildCategoryBar('Beilagen', _getCategoryPercentage('Beilagen'), Colors.green),
           _buildCategoryBar('Desserts', _getCategoryPercentage('Desserts'), Colors.pink),
+          _buildCategoryBar('Sonstiges', _getCategoryPercentage('Sonstiges'), Colors.purple),
         ],
       ),
     );
@@ -839,13 +1175,23 @@ class _MensaFeedbackHomePageState extends State<MensaFeedbackHomePage> {
   double _getCategoryPercentage(String category) {
     if (_userFeedback.isEmpty) return 0.0;
     
-    // Mapping für die Anzeigenamen
-    String categoryKey = category;
-    if (category == 'Hauptgerichte') categoryKey = 'Essen';
+    int categoryCount = 0;
     
-    int categoryCount = _userFeedback.where((feedback) => 
-      _menuByCategory[categoryKey]?.any((food) => food.name == feedback.food) ?? false
-    ).length;
+    if (category == 'Sonstiges') {
+      // Für Sonstiges prüfen wir direkt den Namen
+      categoryCount = _userFeedback.where((feedback) => 
+        feedback.food == 'Allgemeines Mensa-Feedback'
+      ).length;
+    } else {
+      // Für andere Kategorien wie bisher
+      String categoryKey = category;
+      if (category == 'Hauptgerichte') categoryKey = 'Essen';
+      
+      categoryCount = _userFeedback.where((feedback) => 
+        _menuByCategory[categoryKey]?.any((food) => food.name == feedback.food) ?? false
+      ).length;
+    }
+    
     return categoryCount / _userFeedback.length;
   }
 
